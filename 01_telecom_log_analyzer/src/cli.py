@@ -19,7 +19,8 @@ def build_parser() -> argparse.ArgumentParser:
     # Subcommand 1: generate
     gen_cmd = subparsers.add_parser("generate", help="Generate synthetic CSV transaction logs")
     gen_cmd.add_argument("--rows", type=int, default=100_000, help="Number of rows to generate (default: 100000)")
-    gen_cmd.add_argument("--output", type=int, required=True, help="Destination CSV file path")
+    gen_cmd.add_argument("--output", type=Path, required=True, help="Destination CSV file path")
+
 
     # Subcommand 2: analyze
     analyze_cmd = subparsers.add_parser("analyze", help="Analyze a transaction log CSV stream")
