@@ -1,4 +1,4 @@
-from dataclasses import dataclasses
+from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class TimeWindow:
@@ -49,7 +49,7 @@ def select_max_nonoverlapping_jobs(jobs: list[TimeWindow], allow_touching: bool 
 
     return selected
 
-def merge_windows_naive_quadratic(winodws: list[TimeWindow]) -> list[TimeWindow]:
+def merge_windows_naive_quadratic(windows: list[TimeWindow]) -> list[TimeWindow]:
     """0(N^2) pairwise merge reference implementation for complexity benchmarking."""
     pool = list(windows)
     changed = True
@@ -63,7 +63,7 @@ def merge_windows_naive_quadratic(winodws: list[TimeWindow]) -> list[TimeWindow]
                 continue
             cur_start, cur_end = pool[i].start, pool[i].end
             for j in range(i + 1, len(pool)):
-                if not used[j] and max(cur_start, pool[j].start) <= min(curr_end, pool[j].end):
+                if not used[j] and max(cur_start, pool[j].start) <= min(cur_end, pool[j].end):
                     cur_start = min(cur_start, pool[j].start)
                     cur_end = max(cur_end, pool[j].end)
                     used[j] = True
@@ -72,4 +72,3 @@ def merge_windows_naive_quadratic(winodws: list[TimeWindow]) -> list[TimeWindow]
         pool = next_pool
 
     return sorted(pool, key=lambda w: w.start)
-    
