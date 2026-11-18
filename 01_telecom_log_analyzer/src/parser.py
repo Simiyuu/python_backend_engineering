@@ -60,7 +60,8 @@ def analyze_log_stream(csv_path: Path, window_size: int = 100, failure_threshold
                     current_outage_start = timestamp
                 elif failure_rate < (failure_threshold * 0.5) and in_outage:
                     in_outage = False
-                    report.outage_start = None
+                    report.outage_windows.append((current_outage_start, timestamp))
+                    current_outage_start = None
 
     # Close any outage still active at EOF 
     if in_outage and current_outage_start is not None:
