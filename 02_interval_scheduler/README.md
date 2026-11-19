@@ -10,7 +10,7 @@ An interval-merging and greedy job-scheduling engine applying $0(N \log N)$ sort
 ## Usage
 ```bash
 # Run 0(N log N) vs 0(N^2) complexity benchmark
-python_02_interval_scheduler/src/benchmark.py
+python 02_interval_scheduler/src/benchmark.py
 
 # Execute unit and differential test suite
 pytest -v
