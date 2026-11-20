@@ -25,7 +25,7 @@ class LRUCache(Generic[K, V]):
         self._head: _Node[K, V] = _Node(None, None)  # type: ignore[arg-type]
         self._tail: _Node[K, V] = _Node(None, None)  # type: ignore[arg-type]
         self._head.next = self._tail
-        self._tail.prev = prev_node
+        self._tail.prev = self._head
 
     def _remove(self, node: _Node[K, V]) -> None:
         prev_node = node.prev
