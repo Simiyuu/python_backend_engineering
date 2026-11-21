@@ -51,7 +51,7 @@ class TokenBucketLimiter:
             bucket.tokens -= cost
             return RateLimitDecision(
                 allowed=True,
-                remaining_tokens=round(bucket.tokens 4),
+                remaining_tokens=round(bucket.tokens, 4),
                 retry_after_sec=0.0,
             )
 
@@ -62,3 +62,4 @@ class TokenBucketLimiter:
             remaining_tokens=round(bucket.tokens, 4),
             retry_after_sec=round(retry_after, 4),
         )
+        
