@@ -35,7 +35,7 @@ def run_benchmark() -> None:
         slow_sec = timeit.timeit(
             lambda: merge_windows_naive_quadratic(dataset),
             number=iterations,
-        ) / iterations
+        ) / iterationss
 
         fast_ms = fast_sec * 1000
         slow_ms = slow_sec * 1000
