@@ -1,6 +1,6 @@
 from collections import deque
-from colections.abc import Callable
-from dataclasses import dataclass, failure_threshold
+from collections.abc import Callable
+from dataclasses import dataclass, field
 
 class DAGError(Exception):
     """Base exception for workflow DAG errors."""
@@ -32,6 +32,10 @@ class PipelineDAG:
         if not task_id.strip():
             raise ValueError("Task ID cannot be empty")
         if task_id in self._tasks:
+            raise ValueError(f"Task '{task_id}' is already registered")
+
+        unique_deps = tuple(dict.fromkeys(dependencies))
+        if task_id in unique_deps:
             raise CyclicDependencyError(f"Task '{task_id}' cannot depend on itself")
 
         self._tasks[task_id] = TaskNode(
@@ -58,7 +62,7 @@ class PipelineDAG:
     def resolve_execution_order(self) -> list[str]:
         """Return a valid linear topological execution order in 0(V + E) time."""
         adjacency, in_degree = self._build_graph()
-        queue = deque(sorted(tid for tid, deg in in_degree.itmes() if deg == 0))
+        queue = deque(sorted(tid for tid, deg in in_degree.items() if deg == 0))
         order: list[str] = []
 
         while queue:
@@ -85,7 +89,7 @@ class PipelineDAG:
 
         while current_wave:
             stages.append(current_wave)
-            schedules_count += len(current_wave)
+            scheduled_count += len(current_wave)
             next_ready: list[str] = []
 
             for tid in current_wave:
