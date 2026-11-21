@@ -1,8 +1,9 @@
 from dataclasses import dataclass
-from decimal import decimal
+from decimal import Decimal
 import threading
 from typing import Literal
 import uuid
+
 
 class LedgerError(Exception):
     """Base exception for ledger domain errors."""
@@ -84,7 +85,7 @@ class MobileMoneyLedger:
     ) -> TransferReceipt:
         if not idempotency_key.strip():
             raise ValueError("Idempotency key cannot be empty")
-        if sender_ID == receiver_id:
+        if sender_id == receiver_id:
             raise ValueError("Sender and receiver accounts must be distinct")
 
         tx_amount = Decimal(str(amount))
@@ -115,6 +116,16 @@ class MobileMoneyLedger:
             tx_id = str(uuid.uuid4())
             self._balances[sender_id] -= tx_amount
             self._balances[receiver_id] += tx_amount
+            
+            self._journal.append(
+                JournalEntry(
+                    entry_id=str(uuid.uuid4()),
+                    tx_id=tx_id,
+                    account_id=sender_id,
+                    direction="DEBIT",
+                    amount=tx_amount,
+                )
+            )
 
             self._journal.append(
                 JournalEntry(
@@ -145,7 +156,7 @@ class MobileMoneyLedger:
         """Verify total system balances equal net journa; credits minus debits."""
         with self._lock:
             total_credits = sum(
-                (e.amount for e in self._journa if e.direction == "CREDIT"),
+                (e.amount for e in self._journal if e.direction == "CREDIT"),
                 Decimal("0.00"),
             )
             total_debits = sum(
@@ -153,5 +164,7 @@ class MobileMoneyLedger:
                 Decimal("0.00"),
             )
             total_balances = sum(self._balances.values(), Decimal("0.00"))
-            return (total_crdits - total_debits) == total_balances
-            ss
+            return (total_credits - total_debits) == total_balances
+            
+
+        
