@@ -1,6 +1,6 @@
 from collections.abc import Callable
 from dataclasses import dataclass
-from enum import enum
+from enum import Enum
 import random
 import time
 from typing import TypeVar
@@ -21,7 +21,7 @@ class CircuitOpenError(GatewayError):
     def __init__(self, message: str, retry_after_sec: float = 0.0) -> None:
         super().__init__(message)
         self.retry_after_sec = max(0.0, retry_after_sec)
-        
+
 
 class UpstreamTransientError(GatewayError):
     """Retryable infrastructure failure (e.g., HTTP 502/503/504 or gateway timeout)."""
@@ -64,75 +64,75 @@ class CircuitBreaker:
         self._half_open_in_flight = 0
         self._half_open_successes = 0
 
-@property
-def state(self) -> CircuitState:
-    self._sync_state()
-    return self._state
+    @property
+    def state(self) -> CircuitState:
+        self._sync_state()
+        return self._state
 
-@property
-def failure_count(self) -> inti:
-    return self._failure_count
+    @property
+    def failure_count(self) -> inti:
+        return self._failure_count
 
-def _sync_state(self) -> None:
-    if self._state == CircuitState.OPEN and self._opened_at is not None:
-        elapsed = self._clock() - self._opened_at
-        if elapsed >= self.recovery_timeout_sec:
-            self._state = CircuitState.HALF_OPEN  
-            self._half_open_in_flight = 0
-            self._half_open_successes = 0
+    def _sync_state(self) -> None:
+        if self._state == CircuitState.OPEN and self._opened_at is not None:
+            elapsed = self._clock() - self._opened_at
+            if elapsed >= self.recovery_timeout_sec:
+                self._state = CircuitState.HALF_OPEN  
+                self._half_open_in_flight = 0
+                self._half_open_successes = 0
 
-def _trip_open(self) -> None:
-    self._state = CircuitState.OPEN
-    self._opened_at = self._clock()
-    self._half_open_in_flight = 0
-    self._half_open_successes = 0
+    def _trip_open(self) -> None:
+        self._state = CircuitState.OPEN
+        self._opened_at = self._clock()
+        self._half_open_in_flight = 0
+        self._half_open_successes = 0
 
-def _trip_open(self) -> None:
-    """Check whether a call is permitted; raises CircuitOpenError if blocked."""
-    self._sync_state()
+    def before_call(self) -> None:
+        """Check whether a call is permitted; raises CircuitOpenError if blocked."""
+        self._sync_state()
 
-    if self._state == CircuitState.OPEN:
-        elapsed = 0.0 if self._opened_at is None else self._clock() - self._opened_at
-        remaining = max(0.0, self.recovery_timeout_sec - elapsed)
-        raise CircuitOpenError(
-            f"Circuit breaker is OPEN; retry after {remaining:.2f}s",
-            retry_after_sec=remaining,
-        )
-
-    if self._state == CircuitState.HALF_OPEN:
-        if self._half_open_in_flight >= self.half_open_max_calls:
+        if self._state == CircuitState.OPEN:
+            elapsed = 0.0 if self._opened_at is None else self._clock() - self._opened_at
+            remaining = max(0.0, self.recovery_timeout_sec - elapsed)
             raise CircuitOpenError(
-                "Circuit breaker is HALF_OPEN and probe capacity is saturated",
-                retry_after_sec=0.0,
+                f"Circuit breaker is OPEN; retry after {remaining:.2f}s",
+                retry_after_sec=remaining,
             )
-        self._half_open_in_flight += 1
 
-def record_success(self) -> None:
-    """Record a successful upstream execution."""
-    if self._state == CircuitState.HALF_OPEN:
-        self._half_open_in_flight = max(0, self._half_open_in_flight - 1)
-        self._half_open_successes += 1
-        if self._half_open_successes >= self.half_open_max_calls:
-            self._state = CircuitState.CLOSED
+            if self._state == CircuitState.HALF_OPEN:
+                if self._half_open_in_flight >= self.half_open_max_calls:
+                    raise CircuitOpenError(
+                        "Circuit breaker is HALF_OPEN and probe capacity is saturated",
+                        retry_after_sec=0.0,
+                    )
+                self._half_open_in_flight += 1
+
+    def record_success(self) -> None:
+        """Record a successful upstream execution."""
+        if self._state == CircuitState.HALF_OPEN:
+            self._half_open_in_flight = max(0, self._half_open_in_flight - 1)
+            self._half_open_successes += 1
+            if self._half_open_successes >= self.half_open_max_calls:
+                self._state = CircuitState.CLOSED
+                self._failure_count = 0
+                self._opened_at = None
+        else:
             self._failure_count = 0
-            self._opened_at = None
-    else:
-        self._failure_count = 0
 
-def record_failure(self) -> None:
-    """Record a transient infrastructure failure."""
-    if self._state == CircuitState.Half_OPEN:
-        self._half_open_in_flight = max(0, self._half_open_in_flight - 1)
-        self._trip_open()
-    elif self._state == CircuitState.CLOSED:
-        self._failure_count += 1
-        if self._failure_count >= self.failure_threshold:
+    def record_failure(self) -> None:
+        """Record a transient infrastructure failure."""
+        if self._state == CircuitState.HALF_OPEN:
+            self._half_open_in_flight = max(0, self._half_open_in_flight - 1)
             self._trip_open()
+        elif self._state == CircuitState.CLOSED:
+            self._failure_count += 1
+            if self._failure_count >= self.failure_threshold:
+                self._trip_open()
 
-def record_ignored_error(self) -> None:
-    """"Release HALF_OPEN probe capacity when a non-infrastructure 4xx error occurs."""
-    if self._state == CircuitState.HALF_OPEN:
-        self._half_open_in_flight = max(0, self._half_open_in_flight - 1)
+    def record_ignored_error(self) -> None:
+        """"Release HALF_OPEN probe capacity when a non-infrastructure 4xx error occurs."""
+        if self._state == CircuitState.HALF_OPEN:
+            self._half_open_in_flight = max(0, self._half_open_in_flight - 1)
 
 class ResilientGatewayClient:
     """Executes upstream gateway calls with circuit breaking and full-jitter retries."""
@@ -186,7 +186,7 @@ class ResilientGatewayClient:
                 raise
             except (UpstreamTransientError, TimeoutError, ConnectionError):
                 self.circuit_breaker.record_failure()
-                if attempt >= self.max_retries or self.circuit_brreaker.state == CircuitState.OPEN:
+                if attempt >= self.max_retries or self.circuit_breaker.state == CircuitState.OPEN:
                     raise
                 delay = self.compute_backoff_delay(attempt)
                 self._sleeper(delay)
