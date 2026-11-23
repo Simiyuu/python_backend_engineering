@@ -28,7 +28,7 @@ class OutboxEvent:
 class RelayMetrics:
     polled: int = 0
     published: int = 0
-    retired: int = 0
+    retried: int = 0
     dead_lettered: int = 0
     reclaimed_leases: int = 0
 
@@ -118,7 +118,7 @@ class OutboxStore:
         event = self.get(event_id)
         event.status = OutboxStatus.PUBLISHED
         event.published_at = self._clock()
-        event.lease_expires_at = self._clock()
+        event.lease_expires_at = None
         event.last_error = None
 
     def mark_failed(
@@ -189,9 +189,9 @@ class OutboxRelayWorker:
                     base_backoff_sec=self.base_backoff_sec,
                 )
                 if new_status == OutboxStatus.DEAD_LETTERED:
-                    self.metrics.retired += 1
+                    self.metrics.dead_lettered += 1
                 else:
-                    self.metrics.retired += 1
+                    self.metrics.retried += 1
             else:
                 self.store.mark_published(event.event_id)
                 self.metrics.published += 1
