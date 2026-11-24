@@ -1,4 +1,4 @@
-import pathlib import Path  
+from pathlib import Path  
 import sys
 
 import pytest
@@ -45,12 +45,12 @@ def test_tolerance_match_accepts_minor_rounding_and_flags_excess_delta() -> None
     assert report.is_clean is False 
     assert report.matched_count == 0
     assert report.tolerance_matched_count == 1
-    assert len(report.dicrepancies) == 1
+    assert len(report.discrepancies) == 1
 
     mismatch = report.discrepancies[0]
     assert mismatch.txn_ref == "TXN_EXCEEDS"
     assert mismatch.status == ReconciliationStatus.AMOUNT_MISMATCH
-    assert mismatch.delta_cent == -10
+    assert mismatch.delta_cents == -10
 
 def test_detects_missing_in_partner_and_missing_in_ledger() -> None:
     ledger = [
@@ -82,7 +82,7 @@ def test_detects_duplicate_partner_settlement_records() -> None:
     ]
 
     reconciler = SettlementReconciler()
-    report = reconsiler.reconcile(ledger, partner)
+    report = reconciler.reconcile(ledger, partner)
 
     assert report.matched_count == 1
     assert len(report.discrepancies) == 1
@@ -94,7 +94,7 @@ def test_detects_timestamp_drift_outside_settlement_window() -> None:
     partner = [TransactionRecord("TXN_DRIFT", 30000, 5450.0)]
 
     reconciler = SettlementReconciler(max_time_drift_sec=300.0)
-    report - reconciler.reconcile(ledger, partner)
+    report = reconciler.reconcile(ledger, partner)
 
     assert report.matched_count == 0
     assert len(report.discrepancies) == 1
@@ -108,7 +108,7 @@ def test_validation_guards_reject_invalid_records_and_thresholds() -> None:
         SettlementReconciler(max_time_drift_sec=-5.0)
 
     with pytest.raises(ValueError, match="txn_ref"):
-        TransactionRecord("TXN_ZERO", 0, 100.0)
+        TransactionRecord("  ", 1000, 100.0)
 
     with pytest.raises(ValueError, match="amount_cents"):
         TransactionRecord("TXN_ZERO", 0, 100.0)
@@ -120,4 +120,3 @@ def test_validation_guards_reject_invalid_records_and_thresholds() -> None:
     ]
     with pytest.raises(ValueError, match="Duplicate ledger txn_ref"):
         reconciler.reconcile(dup_ledger, [])
-        
