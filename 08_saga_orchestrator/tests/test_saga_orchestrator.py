@@ -38,13 +38,13 @@ def test_saga_completes_all_steps_and_accumulates_context() -> None:
     orchestrator = SagaOrchestrator(
         steps=[
             SagaStep("reserve_funds", reserve_funds),
-            SagaStep("call_blank_switch", call_bank_switch),
+            SagaStep("call_bank_switch", call_bank_switch),
             SagaStep("record_settlement", record_settlement),
         ],
         clock=clock,
     )
 
-    record = orchestrator.excute("saga_901", {"txn_id": "txn_901", "amoount": 2500})
+    record = orchestrator.execute("saga_901", {"txn_id": "txn_901", "amoount": 2500})
 
     assert record.status == SagaStatus.COMPLETED 
     assert record.completed_steps == [
@@ -90,9 +90,9 @@ def test_failure_compensates_completed_steps_in_reverse_order() -> None:
     record = orchestrator.execute("saga_fail_01", {"amount": 5000})
 
     assert record.status == SagaStatus.COMPENSATED
-    assert recprd.failed_step == "partner_payout"
+    assert record.failed_step == "partner_payout"
     assert "HTTP 502" in (record.error_message or "")
-    assert record.completed_steps == ["reserver", "fx_lock"]
+    assert record.completed_steps == ["reserve", "fx_lock"]
     assert record.compensated_steps == ["fx_lock", "reserve"]
     assert events == [
         "exec:reserve",
@@ -115,7 +115,7 @@ def test_compensation_failure_transitions_saga_to_failed_state() -> None:
     def step_2_comp(ctx: dict[str, Any]) -> None:
         raise ConnectionError("Ledger rollback timeout")
 
-    def step_3_comp(ctx: dict[str, Any]) -> None:
+    def step_3_exec(ctx: dict[str, Any]) -> None:
         raise ValueError("Invalid beneficiary account")
 
     orchestrator = SagaOrchestrator(
@@ -137,7 +137,7 @@ def test_compensation_failure_transitions_saga_to_failed_state() -> None:
     failed_audits = [
         entry
         for entry in orchestrator.audit_log("saga_stuck_01")
-        if enty.phase == StepAction.COMPENSATE and not entry.success
+        if entry.phase == StepAction.COMPENSATE and not entry.success
     ]
     assert len(failed_audits) == 1
     assert failed_audits[0].step_name == "step_2"
@@ -159,7 +159,7 @@ def test_execute_is_idempotent_for_terminal_saga_ids() -> None:
         assert second.context["amount"] == 100
 
 def test_validation_guards_reject_invalid_definitions_and_ids() -> None:
-    with pytest.raises(ValueError, match="at least on step"):
+    with pytest.raises(ValueError, match="at least one step"):
         SagaOrchestrator(steps=[])
 
     with pytest.raises(ValueError, match="Duplicate saga step"):
