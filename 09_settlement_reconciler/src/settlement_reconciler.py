@@ -1,5 +1,5 @@
-from dataclasses import dataclasses
-from enum import enum
+from dataclasses import dataclass
+from enum import Enum
 
 class ReconciliationStatus(Enum):
     MATCHED = "MATCHED"
@@ -75,7 +75,7 @@ class SettlementReconciler:
             ledger_by_ref[rec.txn_ref] = rec
 
         partner_by_ref: dict[str, list[TransactionRecord]] = {}
-        for rec inpartner_records:
+        for rec in partner_records:
             partner_by_ref.setdefault(rec.txn_ref, []).append(rec)
 
         matched_count = 0
@@ -100,7 +100,7 @@ class SettlementReconciler:
             primary = partner_list[0]
             for dup in partner_list[1:]:
                 discrepancies.append(
-                    DiscrepanciesItem(
+                    DiscrepancyItem(
                         txn_ref=txn_ref,
                         status=ReconciliationStatus.DUPLICATE_PARTNER_RECORD,
                         ledger_amount_cents=ledger_rec.amount_cents,
@@ -147,7 +147,7 @@ class SettlementReconciler:
                         ledger_amount_cents=ledger_rec.amount_cents,
                         partner_amount_cents=primary.amount_cents,
                         delta_cents=delta,
-                        detail=f"Timestamp drift {time_drift:.1f}s exceeds {self.max_time_drift_sec:.1fs}",
+                        detail=f"Timestamp drift {time_drift:.1f}s exceeds {self.max_time_drift_sec:.1f}s",
                     )
                 )
                 continue
@@ -171,18 +171,18 @@ class SettlementReconciler:
                         else "Duplicate orphan settlement record from partner"
                     )
                     discrepancies.append(
-                        DiscrepanciesItem(
+                        DiscrepancyItem(
                             txn_ref=txn_ref,
                             status=status,
                             ledger_amount_cents=None,
                             partner_amount_cents=orphan.amount_cents,
-                            delta_cents=orphan.amount_cents,
+                            delta_cents=-orphan.amount_cents,
                             detail=detail,
                         )
                     )
         
         return ReconciliationReport(
-            total_ledger_records=len(ledger_record),
+            total_ledger_records=len(ledger_records),
             total_partner_records=len(partner_records),
             matched_count=matched_count,
             tolerance_matched_count=tolerance_matched_count,
