@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from dataclasses import dataclass, mark_failed
+from dataclasses import dataclass, field
 from enum import Enum
 import time
 from typing import Any
@@ -122,7 +122,7 @@ class SagaOrchestrator:
                     )
                 )
             except Exception as exc:
-                record.failed_step = step.name,
+                record.failed_step = step.name
                 record.error_message = str(exc)
                 self._audit_log.append(
                     AuditEntry(
@@ -143,7 +143,7 @@ class SagaOrchestrator:
     def _run_compensations(
         self,
         record: SagaRecord,
-        execute_stack: list[SagaStep],
+        executed_stack: list[SagaStep],
     ) -> None:
         record.status = SagaStatus.COMPENSATING
 
@@ -167,7 +167,7 @@ class SagaOrchestrator:
                 record.error_message = (
                     f"{record.error_message} | Compensation failed at '{step.name}': {comp_exc}"
                 )
-                self._audit_log.appens(
+                self._audit_log.append(
                     AuditEntry(
                         saga_id=record.saga_id,
                         step_name=step.name,
